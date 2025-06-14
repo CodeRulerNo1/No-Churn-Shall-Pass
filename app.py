@@ -101,7 +101,7 @@ if uploaded_file is not None:
         sns.set_style("darkgrid")
         fig_rf.set_size_inches(5, 4)
         plt.style.use('dark_background')
-        mycolors = ["#4CAF50", "#FF9800"]
+        mycolors = ["#378339", "#8F5703"]
         labels_rf = ["Retain", "Churn"]
         ax_rf.pie(churn_counts_rf, colors=mycolors, labels=labels_rf, autopct='%1.1f%%', startangle=90)
         ax_rf.axis('equal')
@@ -121,27 +121,29 @@ if uploaded_file is not None:
     with col3:
         st.markdown("**Random Forest**")
         fig_hist_rf, ax_hist_rf = plt.subplots()
-        sns.histplot(output_df['ChurnProbabilityByRF'], bins=20, kde=True, color="#FF9800", ax=ax_hist_rf)
+        sns.histplot(output_df['ChurnProbabilityByRF'], bins=20, kde=True, color="#BE0F02", ax=ax_hist_rf)
         ax_hist_rf.set_xlabel("Churn Probability")
         ax_hist_rf.set_ylabel("Number of Customers")
         st.pyplot(fig_hist_rf)
     with col4:
         st.markdown("**XGBoost**")
         fig_hist_xgb, ax_hist_xgb = plt.subplots()
-        sns.histplot(output_df['ChurnProbabilityByXGBoost'], bins=20, kde=True, color="#4CAF50", ax=ax_hist_xgb)
+        sns.histplot(output_df['ChurnProbabilityByXGBoost'], bins=20, kde=True, color="#4C8BAF", ax=ax_hist_xgb)
         ax_hist_xgb.set_xlabel("Churn Probability")
         ax_hist_xgb.set_ylabel("Number of Customers")
         st.pyplot(fig_hist_xgb)
-
-    # Top 10 at-risk customers (by XGBoost)
-    st.sidebar.subheader("Top 10 At-Risk Customers (XGBoost)")
-    top_10_xgb = output_df[['customerID', 'ChurnProbabilityByXGBoost']].sort_values(by='ChurnProbabilityByXGBoost', ascending=False).head(10)
-    st.sidebar.write(top_10_xgb)
-
-    # Top 10 at-risk customers (by Random Forest)
-    st.sidebar.subheader("Top 10 At-Risk Customers (Random Forest)")
-    top_10_rf = output_df[['customerID', 'ChurnProbabilityByRF']].sort_values(by='ChurnProbabilityByRF', ascending=False).head(10)
-    st.sidebar.write(top_10_rf)
+    # Display total customer count
+    st.sidebar.markdown(f"**Total At-Risk Customers:** {len(output_df)}")
+    st.sidebar.subheader("At-Risk Customers (Both Models > 0.5)")
+    high_risk = output_df[
+        (output_df['ChurnProbabilityByRF'] > 0.5) &
+        (output_df['ChurnProbabilityByXGBoost'] > 0.5)
+    ]
+    top_risk = high_risk.sort_values(
+        by=['ChurnProbabilityByXGBoost', 'ChurnProbabilityByRF'],
+        ascending=False
+    )
+    st.sidebar.write(top_risk[['customerID', 'ChurnProbabilityByXGBoost', 'ChurnProbabilityByRF']])
 
 else:
     st.sidebar.warning("📂 Please upload a CSV file to proceed.")
