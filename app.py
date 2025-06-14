@@ -84,14 +84,24 @@ if uploaded_file is not None:
             'ChurnPrediction': predictions
         })
 
-        st.subheader("📈 Churn Predictions")
-        st.write(output_df)
-        st.sidebar.header("Predicted Churn Rate")
-        st.sidebar.metric("", f"{(output_df['ChurnPrediction'].mean() * 100):.2f}%")
 
 
     except FileNotFoundError:
         st.error("❌ Model file 'xgb_model.pkl' not found. Please place it in the same folder as this script.")
-
+    # Visualization: Churn vs Retain Pie Chart
+    st.subheader("🥧 Churn vs Retain Breakdown")
+    churn_counts = output_df['ChurnPrediction'].value_counts()
+    fig2, ax2 = plt.subplots()
+    sns.set_style("darkgrid")
+    fig2.set_size_inches(8, 6)
+    plt.style.use('dark_background')
+    mycolors = ["#4CAF50", "#FF9800"]
+    ax2.pie(churn_counts,colors=mycolors, labels=["Retain", "Churn"], autopct='%1.1f%%', startangle=90)
+    ax2.axis('equal')
+    st.pyplot(fig2)
+    # Top 10 at-risk customers
+    st.sidebar.subheader("🚨 Customers At-Risk ")
+    top_10 = output_df[['customerID','ChurnProbability']].sort_values(by='ChurnProbability', ascending=False)
+    st.sidebar.write(top_10)
 else:
     st.sidebar.warning("📂 Please upload a CSV file to proceed.")
