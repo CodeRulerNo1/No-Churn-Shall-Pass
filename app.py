@@ -6,6 +6,7 @@ import seaborn as sns
 import joblib
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import LabelEncoder
+
 def transform(data):
     # normalize the numeric columns
     scaler = MinMaxScaler()
@@ -134,7 +135,7 @@ if uploaded_file is not None:
         st.pyplot(fig_hist_xgb)
     # Display total customer count
     st.sidebar.markdown(f"**Total At-Risk Customers:** {len(output_df)}")
-    st.sidebar.subheader("At-Risk Customers (Both Models > 0.5)")
+    st.sidebar.subheader("Top 10 At-Risk Customers (Both Models > 0.5)")
     high_risk = output_df[
         (output_df['ChurnProbabilityByRF'] > 0.5) &
         (output_df['ChurnProbabilityByXGBoost'] > 0.5)
@@ -142,7 +143,7 @@ if uploaded_file is not None:
     top_risk = high_risk.sort_values(
         by=['ChurnProbabilityByXGBoost', 'ChurnProbabilityByRF'],
         ascending=False
-    )
+    ).head(10)
     st.sidebar.write(top_risk[['customerID', 'ChurnProbabilityByXGBoost', 'ChurnProbabilityByRF']])
 
 else:
