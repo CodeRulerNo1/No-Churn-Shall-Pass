@@ -57,16 +57,16 @@ if uploaded_file is not None:
         st.error("❌ 'customerID' column is required in your file for prediction tracking.")
         st.stop()
 
-    st.subheader("📊 Input Data Overview")
+    st.subheader("Input Data Overview")
     st.dataframe(df.head())
 
     # Load pre-trained model (assumes model is saved as 'best_xgb_churn_model.pkl')
     try:
-        model = joblib.load('best_churn_model.pkl')
+        model1 = joblib.load('best_churn_model.pkl')
     except FileNotFoundError:
         st.error("❌ Model file 'xgb_model.pkl' not found. Please place it in the same folder as this script.")
     try:
-        model= joblib.load('best_xgb_churn_model.pkl')
+        model2= joblib.load('best_xgb_churn_model.pkl')
     except FileNotFoundError:
         st.error("❌ Model file 'best_xgb_churn_model.pkl' not found. Please place it in the same folder as this script.")
     # Feature engineering and preprocessing would go here
@@ -74,34 +74,74 @@ if uploaded_file is not None:
 
     try:
         # Predictions (assuming model works with raw df_model_input)
-        probs = model.predict_proba(X_encoded)[:, 1]
-        predictions = (probs > 0.5).astype(int)
-
+        probs1 = model1.predict_proba(X_encoded)[:, 1]
+        probs2 = model2.predict_proba(X_encoded)[:, 1]
+        predictions1 = (probs1 > 0.5).astype(int)
+        predictions2 = (probs2 > 0.5).astype(int)
         # Combine predictions with customerID
         output_df = pd.DataFrame({
             'customerID': customer_ids,
-            'ChurnProbability': probs,
-            'ChurnPrediction': predictions
+            'ChurnProbabilityByRF': probs1,
+            'ChurnProbabilityByXGBoost': probs2,
+            'ChurnPredictionByRF': predictions1,
+            'ChurnPredictionByXGBoost': predictions2
         })
 
 
 
     except FileNotFoundError:
         st.error("❌ Model file 'xgb_model.pkl' not found. Please place it in the same folder as this script.")
-    # Visualization: Churn vs Retain Pie Chart
-    st.subheader("🥧 Churn vs Retain Breakdown")
-    churn_counts = output_df['ChurnPrediction'].value_counts()
-    fig2, ax2 = plt.subplots()
-    sns.set_style("darkgrid")
-    fig2.set_size_inches(8, 6)
-    plt.style.use('dark_background')
-    mycolors = ["#4CAF50", "#FF9800"]
-    ax2.pie(churn_counts,colors=mycolors, labels=["Retain", "Churn"], autopct='%1.1f%%', startangle=90)
-    ax2.axis('equal')
-    st.pyplot(fig2)
-    # Top 10 at-risk customers
-    st.sidebar.subheader("🚨 Customers At-Risk ")
-    top_10 = output_df[['customerID','ChurnProbability']].sort_values(by='ChurnProbability', ascending=False)
-    st.sidebar.write(top_10)
+    # Grouped Pie Charts: Churn vs Retain Breakdown
+    st.subheader("Churn vs Retain Breakdown")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("**Random Forest**")
+        churn_counts_rf = output_df['ChurnPredictionByRF'].value_counts().sort_index()
+        fig_rf, ax_rf = plt.subplots()
+        sns.set_style("darkgrid")
+        fig_rf.set_size_inches(5, 4)
+        plt.style.use('dark_background')
+        mycolors = ["#4CAF50", "#FF9800"]
+        labels_rf = ["Retain", "Churn"]
+        ax_rf.pie(churn_counts_rf, colors=mycolors, labels=labels_rf, autopct='%1.1f%%', startangle=90)
+        ax_rf.axis('equal')
+        st.pyplot(fig_rf)
+    with col2:
+        st.markdown("**XGBoost**")
+        churn_counts_xgb = output_df['ChurnPredictionByXGBoost'].value_counts().sort_index()
+        fig_xgb, ax_xgb = plt.subplots()
+        fig_xgb.set_size_inches(5, 4)
+        ax_xgb.pie(churn_counts_xgb, colors=mycolors, labels=labels_rf, autopct='%1.1f%%', startangle=90)
+        ax_xgb.axis('equal')
+        st.pyplot(fig_xgb)
+
+    # Grouped Histograms: Churn Probability Distribution
+    st.subheader("Churn Probability Distribution")
+    col3, col4 = st.columns(2)
+    with col3:
+        st.markdown("**Random Forest**")
+        fig_hist_rf, ax_hist_rf = plt.subplots()
+        sns.histplot(output_df['ChurnProbabilityByRF'], bins=20, kde=True, color="#FF9800", ax=ax_hist_rf)
+        ax_hist_rf.set_xlabel("Churn Probability")
+        ax_hist_rf.set_ylabel("Number of Customers")
+        st.pyplot(fig_hist_rf)
+    with col4:
+        st.markdown("**XGBoost**")
+        fig_hist_xgb, ax_hist_xgb = plt.subplots()
+        sns.histplot(output_df['ChurnProbabilityByXGBoost'], bins=20, kde=True, color="#4CAF50", ax=ax_hist_xgb)
+        ax_hist_xgb.set_xlabel("Churn Probability")
+        ax_hist_xgb.set_ylabel("Number of Customers")
+        st.pyplot(fig_hist_xgb)
+
+    # Top 10 at-risk customers (by XGBoost)
+    st.sidebar.subheader("Top 10 At-Risk Customers (XGBoost)")
+    top_10_xgb = output_df[['customerID', 'ChurnProbabilityByXGBoost']].sort_values(by='ChurnProbabilityByXGBoost', ascending=False).head(10)
+    st.sidebar.write(top_10_xgb)
+
+    # Top 10 at-risk customers (by Random Forest)
+    st.sidebar.subheader("Top 10 At-Risk Customers (Random Forest)")
+    top_10_rf = output_df[['customerID', 'ChurnProbabilityByRF']].sort_values(by='ChurnProbabilityByRF', ascending=False).head(10)
+    st.sidebar.write(top_10_rf)
+
 else:
     st.sidebar.warning("📂 Please upload a CSV file to proceed.")
