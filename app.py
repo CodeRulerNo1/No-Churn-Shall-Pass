@@ -87,6 +87,14 @@ if uploaded_file is not None:
             'ChurnPredictionByRF': predictions1,
             'ChurnPredictionByXGBoost': predictions2
         })
+        # Download button
+        csv = output_df.to_csv(index=False)
+        st.download_button(
+            label="Download Predictions as CSV",
+            data=csv,
+            file_name="churn_predictions.csv",
+            mime="text/csv"
+        )
 
 
 
