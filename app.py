@@ -86,17 +86,9 @@ if uploaded_file is not None:
 
         st.subheader("📈 Churn Predictions")
         st.write(output_df)
+        st.sidebar.header("Predicted Churn Rate")
+        st.sidebar.metric("", f"{(output_df['ChurnPrediction'].mean() * 100):.2f}%")
 
-        st.metric("Predicted Churn Rate", f"{(output_df['ChurnPrediction'].mean() * 100):.2f}%")
-
-        # Download button
-        csv = output_df.to_csv(index=False)
-        st.download_button(
-            label="📥 Download Predictions as CSV",
-            data=csv,
-            file_name="churn_predictions.csv",
-            mime="text/csv"
-        )
 
     except FileNotFoundError:
         st.error("❌ Model file 'xgb_model.pkl' not found. Please place it in the same folder as this script.")
