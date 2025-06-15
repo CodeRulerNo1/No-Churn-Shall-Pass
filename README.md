@@ -36,7 +36,7 @@ This project is a churn prediction tool and interactive dashboard for fintech cu
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/stop-the-churn.git
+git clone https://github.com/CodeRulerNo1/stop-the-churn.git
 cd stop-the-churn
 ```
 
