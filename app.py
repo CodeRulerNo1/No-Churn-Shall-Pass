@@ -42,10 +42,82 @@ def transform(data):
     return data_encoded
 
 st.set_page_config(page_title="Customer Churn Dashboard", layout="wide")
-st.title("🔍 Customer Churn Prediction Dashboard")
+sns.set_style("darkgrid")
+plt.style.use('dark_background')
+st.title("Customer Churn Prediction Dashboard")
 
+
+# XGBoost feature importance
+xgb_features = [
+    "AvgMonthlySpend", "Contract", "MonthlyCharges", "AvgChargesPerMonth",
+    "PaymentMethod", "InternetService", "OnlineSecurity"
+]
+xgb_importance = [0.153986, 0.092029, 0.086836, 0.073671, 0.030797, 0.013527, 0.005072]
+
+# Random Forest feature importance
+rf_features = [
+    "Contract", "AvgMonthlySpend", "MonthlyCharges", "AvgChargesPerMonth",
+    "InternetService", "PaymentMethod", "OnlineSecurity"
+]
+rf_importance = [0.121618, 0.068478, 0.050483, 0.032729, 0.037560, 0.024517, 0.014493]
+
+col5, col6 = st.columns(2)
+with col5:
+    st.markdown("**XGBoost Feature Importance**")
+    fig_xgb_feat, ax_xgb_feat = plt.subplots()
+    ax_xgb_feat.pie(
+        xgb_importance,
+        labels=xgb_features,
+        autopct='%1.1f%%',
+        startangle=140,
+        colors=sns.dark_palette("#a63c29", len(xgb_features))
+    )
+    ax_xgb_feat.axis('equal')
+    st.pyplot(fig_xgb_feat)
+
+with col6:
+    st.markdown("**Random Forest Feature Importance**")
+    fig_rf_feat, ax_rf_feat = plt.subplots()
+    ax_rf_feat.pie(
+        rf_importance,
+        labels=rf_features,
+        autopct='%1.1f%%',
+        startangle=140,
+        colors=sns.dark_palette("#69d", len(rf_features))
+    )
+    ax_rf_feat.axis('equal')
+    st.pyplot(fig_rf_feat)
 st.sidebar.header("Upload Customer Data CSV")
 uploaded_file = st.sidebar.file_uploader("Upload CSV", type=["csv"])
+# plot aoc comparison as grouped pie charts
+xgb_aoc=0.92
+rf_aoc=0.96
+col7,col8= st.columns(2)
+with col7:
+    st.markdown("**XGBoost AUC**")
+    fig_xgb_feat, ax_xgb_feat = plt.subplots(figsize=(5, 4))
+    ax_xgb_feat.pie(
+        [xgb_aoc, 1 - xgb_aoc],
+        labels=['AUC: {:.2f}'.format(xgb_aoc), 'Rest'],
+        autopct='%1.1f%%',
+        startangle=140,
+        colors=sns.color_palette("flare", 2)
+    )
+    ax_xgb_feat.axis('equal')
+    st.pyplot(fig_xgb_feat)
+
+with col8:
+    st.markdown("**Random Forest AUC**")
+    fig_rf_feat, ax_rf_feat = plt.subplots(figsize=(5, 4))
+    ax_rf_feat.pie(
+        [rf_aoc, 1 - rf_aoc],
+        labels=['AUC: {:.2f}'.format(rf_aoc), 'Rest'],
+        autopct='%1.1f%%',
+        startangle=140,
+        colors=sns.color_palette("crest", 2)
+    )
+    ax_xgb_feat.axis('equal')
+    st.pyplot(fig_rf_feat)
 
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
@@ -106,20 +178,21 @@ if uploaded_file is not None:
     with col1:
         st.markdown("**Random Forest**")
         churn_counts_rf = output_df['ChurnPredictionByRF'].value_counts().sort_index()
-        fig_rf, ax_rf = plt.subplots()
-        sns.set_style("darkgrid")
-        fig_rf.set_size_inches(5, 4)
-        plt.style.use('dark_background')
-        mycolors = ["#378339", "#8F5703"]
+        fig_rf, ax_rf = plt.subplots(figsize=(5, 4))
+        
+        
+        
+        mycolors = ["#550C0C", "#B42424"]
         labels_rf = ["Retain", "Churn"]
         ax_rf.pie(churn_counts_rf, colors=mycolors, labels=labels_rf, autopct='%1.1f%%', startangle=90)
         ax_rf.axis('equal')
         st.pyplot(fig_rf)
     with col2:
+        mycolors = ["#0C1355", "#243EB4"]
         st.markdown("**XGBoost**")
         churn_counts_xgb = output_df['ChurnPredictionByXGBoost'].value_counts().sort_index()
-        fig_xgb, ax_xgb = plt.subplots()
-        fig_xgb.set_size_inches(5, 4)
+        fig_xgb, ax_xgb = plt.subplots(figsize=(5, 4))
+        
         ax_xgb.pie(churn_counts_xgb, colors=mycolors, labels=labels_rf, autopct='%1.1f%%', startangle=90)
         ax_xgb.axis('equal')
         st.pyplot(fig_xgb)
@@ -129,21 +202,21 @@ if uploaded_file is not None:
     col3, col4 = st.columns(2)
     with col3:
         st.markdown("**Random Forest**")
-        fig_hist_rf, ax_hist_rf = plt.subplots()
+        fig_hist_rf, ax_hist_rf = plt.subplots(figsize=(5, 4))
         sns.histplot(output_df['ChurnProbabilityByRF'], bins=20, kde=True, color="#BE0F02", ax=ax_hist_rf)
         ax_hist_rf.set_xlabel("Churn Probability")
         ax_hist_rf.set_ylabel("Number of Customers")
         st.pyplot(fig_hist_rf)
     with col4:
         st.markdown("**XGBoost**")
-        fig_hist_xgb, ax_hist_xgb = plt.subplots()
+        fig_hist_xgb, ax_hist_xgb = plt.subplots(figsize=(5, 4))
         sns.histplot(output_df['ChurnProbabilityByXGBoost'], bins=20, kde=True, color="#4C8BAF", ax=ax_hist_xgb)
         ax_hist_xgb.set_xlabel("Churn Probability")
         ax_hist_xgb.set_ylabel("Number of Customers")
         st.pyplot(fig_hist_xgb)
     # Display total customer count
     st.sidebar.markdown(f"**Total At-Risk Customers:** {len(output_df)}")
-    st.sidebar.subheader("Top 10 At-Risk Customers (Both Models > 0.5)")
+    st.sidebar.subheader("Top 10 At-Risk Customers")
     high_risk = output_df[
         (output_df['ChurnProbabilityByRF'] > 0.5) &
         (output_df['ChurnProbabilityByXGBoost'] > 0.5)
@@ -156,3 +229,4 @@ if uploaded_file is not None:
 
 else:
     st.sidebar.warning("📂 Please upload a CSV file to proceed.")
+    
