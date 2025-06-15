@@ -131,7 +131,6 @@ See `train.ipynb` for:
 
 ## Model Performance
 
-Example (replace with your actual results):
 
 | Model         | AUC   | Test Accuracy |
 |---------------|-------|--------------|
