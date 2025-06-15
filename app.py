@@ -40,10 +40,42 @@ def transform(data):
     # selecting the features for the model
     data_encoded = data_encoded[selected_features]
     return data_encoded
-
 st.set_page_config(page_title="Customer Churn Dashboard", layout="wide")
-sns.set_style("darkgrid")
-plt.style.use('dark_background')
+st.markdown("""
+    <style>
+    .toggle-switch {
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+    }
+    .toggle-switch label {
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# Streamlit toggle for dark/light mode
+dark_mode = st.sidebar.checkbox("", value=False, key="dark_mode_toggle")
+mode_text = "Dark Mode" if dark_mode else "Light Mode"
+st.sidebar.markdown(f"<span style='font-weight:bold;font-size:1.1em'>{mode_text}</span>", unsafe_allow_html=True)
+
+# Apply theme based on toggle
+if dark_mode:
+    sns.set_style("darkgrid")
+    plt.style.use('dark_background')
+    st.markdown(
+        "<style>body { background-color: #181818; color: #FAFAFA; }</style>",
+        unsafe_allow_html=True
+    )
+else:
+    sns.set_style("whitegrid")
+    plt.style.use('default')
+    st.markdown(
+        "<style>body { background-color: #FAFAFA; color: #181818; }</style>",
+        unsafe_allow_html=True
+    )
+
 st.title("Customer Churn Prediction Dashboard")
 
 
